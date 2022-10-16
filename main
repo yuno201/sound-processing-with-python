@@ -1,0 +1,119 @@
+import librosa, librosa.display #importer biblio
+import matplotlib.pyplot as plt
+import numpy as np
+import math
+from pygame import mixer
+from scipy.integrate import quad
+import sounddevice as sd
+from scipy.io.wavfile import write
+import wavio as wv
+#affichage fonction du 1ere signale
+def s(t):
+    return d+amplitude*math.cos(2*math.pi*frequence*t+dephasage)
+frequence =int(input("donner la 1 er frequence :"))
+amplitude =int(input("donner le 1er amplitude :"))
+dephasage=int(input("donner le 1er dephasage :"))
+d=int(input("donner le 1er decalage :"))
+print("la 1ere fonction :",d,"+",amplitude,"cos( 2*PI*",frequence,"t+",dephasage,")")
+#affichage fonction du 2eme signale
+def f(t1):
+    return d1+amplitude1*math.cos(2*math.pi*frequence1*t1+dephasage1)
+frequence1 =int(input("donner la 2eme frequence :"))
+amplitude1 =int(input("donner la 2eme amplitude :"))
+dephasage1=int(input("donner le 2eme dephasage :"))
+d1=int(input("donner le 2eme decalage :"))
+print("la 2eme fonction :",d1,"+",amplitude1,"cos( 2*PI*",frequence1,"t+",dephasage1,")")
+signal=[]
+temp=[]
+t=0
+signal1=[]
+temp1=[]
+#1ere signale (affichage)
+while t<=1:
+    signal.append(s(t))
+    temp.append(t)
+    t+=0.01
+plt.plot(temp,signal)
+plt.xlabel("time") #axe des x
+plt.ylabel("amplitude")#axe des y
+plt.title("waveform1") #titre
+plt.show()
+#2eme signal(affichage)
+t1=0
+while t1<=1:
+    signal1.append(f(t1))
+    temp1.append(t1)
+    t1+=0.01
+plt.plot(temp1,signal1)
+plt.xlabel("time") #axe des x
+plt.ylabel("amplitude")#axe des y
+plt.title("waveform2") #titre
+plt.show()
+#valeur moyenne du signal 1
+period=1/frequence
+ans,err=quad(s,0,period)
+vm=ans*frequence
+print("la valeur moyenne du signal 1 est ",vm)
+#valeur moyenne du signal 2
+period1=1/frequence1
+ans1,err1=quad(f,0,period1)
+vm1=ans1*frequence1
+print("la valeur moyenne du signal 2 est ",vm1)
+#puissance 1
+def s1(t):
+    return (d+amplitude*math.cos(2*math.pi*frequence*t+dephasage))**2
+ans2,err2=quad(s1,0,period)
+p=ans2*frequence
+print("la puissance du signal 1: ",p)
+#puissance 2
+def f1(t):
+    return (d1+amplitude1*math.cos(2*math.pi*frequence1*t1+dephasage1))**2
+ans3,err3=quad(f1,0,period1)
+p1=ans3*frequence1
+print("la puissance du signal 2:",p1)
+#Echantillonnage
+D = 2. # Duree d'observation
+fe = 10. # Frequence d'echantillonnage
+N = int(D * fe) + 1 # Nombre de points enregistresS
+te = np.linspace(0., (N-1)/fe, N) # Grille d'echantillonnage
+tp = np.linspace(0., D, 1000) # Grille plus fine pour tracer l'allure du signal parfait
+# Traçcage du signal
+s0=[s(t) for t in te]
+s1=[s(t) for t in tp]
+plt.plot(te, s0, 'or-', label = u"Signal echantillonne")
+plt.plot(tp, s1, 'b-', label = u"Signal reel")
+plt.xlabel("Temps $t$")
+plt.ylabel("Amplitude $x(t)$")
+plt.show()
+#fft --> spectrum
+fft = np.fft.fft(signal)
+magnitude =np.abs (fft)
+frequency = np.linspace(0, len(magnitude), len(magnitude))
+left_frequency = frequency[:int(len(frequency)/2)]
+left_magnitude = magnitude[:int(len(frequency)/2)]
+plt.plot(left_frequency, left_magnitude)
+plt.xlabel ("Frequency")
+plt.ylabel("Magnitude")
+plt.show()
+#lecture audio
+s,sr=librosa.load("StarWars3.wav",sr=22050) #signal et signal divise
+mixer.init()
+mixer.music.load("StarWars3.wav")
+mixer.music.set_volume(0.8)
+mixer.music.play()
+plt.figure(figsize=(5,5)) #taille fenetre
+librosa.display.waveplot(s,sr)
+plt.title("Starwars3")
+plt.show()#affichage signal
+#enregistrer un audio
+freq = 44100
+duration = 3
+recording = sd.rec(int(duration * freq),samplerate=freq, channels=2)
+print('en train d' 'enregistrer.....')
+sd.wait()
+write("recording.wav", freq, recording)
+s1,sr1=librosa.load("recording.wav",sr=22050) #signal et signal divise
+plt.figure(figsize=(5,5)) #taille fenetre
+librosa.display.waveplot(s1,sr1)
+plt.title("recording")
+plt.show()#affichage signal
